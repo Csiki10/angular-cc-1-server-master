@@ -2,7 +2,7 @@
   "items": [
     {
       "id": 1,
-      "image": "public/assets/images/products/image1.jpg",
+      "image": "assets/images/products/image1.jpg",
       "name": "Black Hoodie",
       "price": "24",
       "rating": 5
@@ -10,20 +10,20 @@
     {
       "id": 2,
       "name": "Branded Shoes",
-      "image": "public/assets/images/products/image2.jpg",
+      "image": "assets/images/products/image2.jpg",
       "price": "13.5",
       "rating": 4
     },
     {
       "id": 3,
-      "image": "public/assets/images/products/image3.jpg",
+      "image": "assets/images/products/image3.jpg",
       "name": "White",
       "price": "85.0",
       "rating": 3
     },
     {
       "id": 4,
-      "image": "public/assets/images/products/image4.jpg",
+      "image": "assets/images/products/image4.jpg",
       "name": "Gray Dress 1",
       "price": "625",
       "rating": 3
@@ -31,77 +31,77 @@
     {
       "id": 5,
       "name": "Black T-Shirt (Mens)",
-      "image": "public/assets/images/products/image5.jpg",
+      "image": "assets/images/products/image5.jpg",
       "price": "55.0",
       "rating": 5
     },
     {
       "id": 6,
       "name": "Jeans Jacket",
-      "image": "public/assets/images/products/image6.jpg",
+      "image": "assets/images/products/image6.jpg",
       "price": "115.0",
       "rating": 4
     },
     {
       "id": 7,
       "name": "Black T-Shirt (Womens)",
-      "image": "public/assets/images/products/image7.jpg",
+      "image": "assets/images/products/image7.jpg",
       "price": "25.0",
       "rating": 3
     },
     {
       "id": 8,
       "name": "Beige Trench Coat",
-      "image": "public/assets/images/products/image8.jpg",
+      "image": "assets/images/products/image8.jpg",
       "price": "52.0",
       "rating": 1
     },
     {
       "id": 9,
       "name": "Stylish Shoes",
-      "image": "public/assets/images/products/image9.jpg",
+      "image": "assets/images/products/image9.jpg",
       "price": "32.0",
       "rating": 2
     },
     {
       "id": 10,
       "name": "Stylish Shoes - B",
-      "image": "public/assets/images/products/image10.jpg",
+      "image": "assets/images/products/image10.jpg",
       "price": "55.0",
       "rating": 5
     },
     {
       "id": 11,
       "name": "Beanie Black",
-      "image": "public/assets/images/products/image11.jpg",
+      "image": "assets/images/products/image11.jpg",
       "price": "15.0",
       "rating": 1
     },
     {
       "id": 12,
       "name": "Beanie Orange",
-      "image": "public/assets/images/products/image12.jpg",
+      "image": "assets/images/products/image12.jpg",
       "price": "12.5",
       "rating": 2
     },
     {
       "id": 13,
       "name": "Beanie Red",
-      "image": "public/assets/images/products/image13.jpg",
+      "image": "assets/images/products/image13.jpg",
       "price": "14.5",
       "rating": 4
     },
     {
       "id": 15,
       "name": "Cyan Long Sleeve Shirt",
-      "image": "public/assets/images/products/image15.jpg",
+      "image": "assets/images/products/image15.jpg",
       "price": "15.5",
       "rating": 5
     },
     {
       "id": 16,
       "name": "Yellow Raincoat",
-      "image": "public/assets/images/products/image16.jpg",
+      "image": "assets/images/products/image16.jpg",
       "price": "12.5",
       "rating": 3
     }
