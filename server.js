@@ -95,8 +95,7 @@ app.put("/clothes/:id", async (req, res) => {
   const { image, name, price, rating } = req.body;
 
   if (!name || !price) {
-    res.status(400).send("Missing required field(s)");
-    return;
+    return res.status(400).json({ message: "Missing required field(s)" });
   }
 
   try {
@@ -110,20 +109,25 @@ app.put("/clothes/:id", async (req, res) => {
     );
 
     if (result.modifiedCount === 0) {
-      res.status(404).send("Product not found");
+      return res.status(404).json({ message: "Product not found" });
     } else {
-      res.status(200).send(`Product with id ${id} updated`);
+      return res.status(200).json({
+        message: `Product with id ${id} updated`,
+        product: updatedProduct,
+      });
     }
   } catch (error) {
     console.error("Failed to update product:", error);
-    res.status(500).send(`Failed to update product. Error: ${error}`);
+    return res
+      .status(500)
+      .json({ message: `Failed to update product. Error: ${error.message}` });
   }
 });
 
 // DELETE route - Delete an item by ID
 app.delete("/clothes/:id", async (req, res) => {
   const id = req.params.id;
-
+  console.log("delete: " + id);
   if (!id) {
     res.status(400).send("Missing id");
     return;
