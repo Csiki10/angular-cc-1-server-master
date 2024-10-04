@@ -147,7 +147,7 @@ app.delete("/clothes/:id", async (req, res) => {
     }
 
     await products.deleteOne({ _id: new ObjectId(id) });
-    res.status(204).send();
+    return res.status(204).send();
   } catch (error) {
     console.error("Failed to delete product:", error);
     return res
