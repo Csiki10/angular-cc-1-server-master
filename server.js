@@ -30,7 +30,7 @@ app.get("/", (req, res) => {
 });
 
 // GET route - Allows to get all the items
-// example: localhost:3000/clothes?page=0&perPage=2
+// example: localhost:8000/clothes?page=0&perPage=2
 app.get("/clothes", async (req, res) => {
   const page = parseInt(req.query.page) || 0;
   const perPage = parseInt(req.query.perPage) || 10;
@@ -41,8 +41,6 @@ app.get("/clothes", async (req, res) => {
       .skip(page * perPage)
       .limit(perPage)
       .toArray();
-
-    console.log(data.length);
 
     res.status(200).json({
       items: data,
@@ -58,7 +56,7 @@ app.get("/clothes", async (req, res) => {
 });
 
 // POST route - Allows to add a new item
-// example: localhost:3000/clothes
+// example: localhost:8000/clothes
 /*
   body: {
     "image": "https://your-image-url.com/image.png",
@@ -67,47 +65,33 @@ app.get("/clothes", async (req, res) => {
     "rating": 4
   }
 */
-app.post("/clothes", (req, res) => {
+app.post("/clothes", async (req, res) => {
   const { image, name, price, rating } = req.body;
 
-  fs.readFile("db.json", "utf8", (err, data) => {
-    if (err) {
-      console.log(err);
-      res.status(500).send("Internal Server Error");
-      return;
-    }
+  if (!name || !price) {
+    res.status(400).send("Missing required field/(s)");
+    return;
+  }
 
-    const jsonData = JSON.parse(data);
-
-    const maxId = jsonData.items.reduce(
-      (max, item) => Math.max(max, item.id),
-      0
-    );
-
-    const newItem = {
-      id: maxId + 1,
+  try {
+    const newProduct = {
       image,
       name,
       price,
       rating,
     };
 
-    jsonData.items.push(newItem);
-
-    fs.writeFile("db.json", JSON.stringify(jsonData), (err) => {
-      if (err) {
-        console.log(err);
-        res.status(500).send("Internal Server Error");
-        return;
-      }
-
-      res.status(201).json(newItem);
-    });
-  });
+    await products.insertOne(newProduct);
+    res.status(201).json(newProduct);
+  } catch (error) {
+    console.log(error);
+    res.status(500).send(`Failed to add product. Error: ${error}`);
+    return;
+  }
 });
 
 // PUT route - Allows to update an item
-// example: localhost:3000/clothes/1
+// example: localhost:8000/clothes/1
 /*
   body: {
     "image": "https://your-image-url.com/image.png",
@@ -116,79 +100,64 @@ app.post("/clothes", (req, res) => {
     "rating": 4
   }
 */
-app.put("/clothes/:id", (req, res) => {
-  const id = parseInt(req.params.id);
+app.put("/clothes/:id", async (req, res) => {
+  const id = req.params.id;
   const { image, name, price, rating } = req.body;
 
-  fs.readFile("db.json", "utf8", (err, data) => {
-    if (err) {
-      console.log(err);
-      res.status(500).send("Internal Server Error");
-      return;
+  if (!name || !price) {
+    res.status(400).send("Missing required field/(s)");
+    return;
+  }
+
+  const updatedProduct = {
+    image,
+    name,
+    price,
+    rating,
+  };
+
+  try {
+    const result = await products.updateOne(
+      { _id: ObjectId(id) },
+      { $set: updatedProduct }
+    );
+
+    if (result.modifiedCount === 0) {
+      res.status(404).send({ error: "Job not found" });
+    } else {
+      res.status(200).send(`Job with id ${jobId} updated`);
     }
-
-    const jsonData = JSON.parse(data);
-
-    const index = jsonData.items.findIndex((item) => item.id === id);
-
-    if (index === -1) {
-      res.status(404).send("Not Found");
-      return;
-    }
-
-    jsonData.items[index] = {
-      id,
-      image,
-      name,
-      price,
-      rating,
-    };
-
-    fs.writeFile("db.json", JSON.stringify(jsonData), (err) => {
-      if (err) {
-        console.log(err);
-        res.status(500).send("Internal Server Error");
-        return;
-      }
-
-      res.status(200).json(jsonData.items[index]);
-    });
-  });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send(`Failed to update product. Error: ${error}`);
+    return;
+  }
 });
 
 // DELETE route - Allows to delete an item
-// example: localhost:3000/clothes/1
-app.delete("/clothes/:id", (req, res) => {
-  const id = parseInt(req.params.id);
+// example: localhost:8000/clothes/1
+app.delete("/clothes/:id", async (req, res) => {
+  const id = req.params.id;
 
-  fs.readFile("db.json", "utf8", (err, data) => {
-    if (err) {
-      console.log(err);
-      res.status(500).send("Internal Server Error");
-      return;
-    }
+  if (!id) {
+    res.status(400).send("Missing id");
+    return;
+  }
 
-    const jsonData = JSON.parse(data);
-
-    const index = jsonData.items.findIndex((item) => item.id === id);
-
-    if (index === -1) {
+  try {
+    const product = await products.findOne({ _id: new ObjectId(id) });
+    if (!product) {
       res.status(404).send("Not Found");
       return;
     }
 
-    jsonData.items.splice(index, 1);
-
-    fs.writeFile("db.json", JSON.stringify(jsonData), (err) => {
-      if (err) {
-        console.log(err);
-        res.status(500).send("Internal Server Error");
-        return;
-      }
-
-      res.status(204).send();
-    });
-  });
+    await products.deleteOne({ _id: new ObjectId(id) });
+    res.status(204).send();
+  } catch (error) {
+    console.log(error);
+    res.status(500).send(`Failed to delete product. Error: ${error}`);
+    return;
+  }
 });
 
 app.listen(process.env.PORT, () => {
