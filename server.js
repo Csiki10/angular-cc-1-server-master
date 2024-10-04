@@ -1,8 +1,6 @@
 const express = require("express");
-const fs = require("fs");
 const cors = require("cors");
 const { MongoClient, ObjectId, ServerApiVersion } = require("mongodb");
-
 require("dotenv").config();
 
 const app = express();
@@ -12,31 +10,44 @@ app.use(express.json());
 
 const mongoURI = process.env.MONGODB_URI;
 
-//mongo URI
-const client = new MongoClient(mongoURI, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  },
-});
+// MongoDB connection logic
+let db;
+async function connectToMongo() {
+  if (!db) {
+    try {
+      const client = new MongoClient(mongoURI, {
+        serverApi: {
+          version: ServerApiVersion.v1,
+          strict: true,
+          deprecationErrors: true,
+        },
+      });
+      await client.connect();
+      db = client.db("ProductStore");
+      console.log("Connected to MongoDB");
+    } catch (error) {
+      console.error("MongoDB connection failed:", error);
+      throw error;
+    }
+  }
+  return db;
+}
 
-client.connect();
-const db = client.db("ProductStore");
-const products = db.collection("products");
-
+// Root route
 app.get("/", (req, res) => {
   res.send("WORKING");
 });
 
-// GET route - Allows to get all the items
-// example: localhost:8000/clothes?page=0&perPage=2
+// GET route - Get all items with pagination
 app.get("/clothes", async (req, res) => {
   const page = parseInt(req.query.page) || 0;
   const perPage = parseInt(req.query.perPage) || 10;
 
   try {
-    var data = await products
+    const db = await connectToMongo();
+    const products = db.collection("products");
+
+    const data = await products
       .find()
       .skip(page * perPage)
       .limit(perPage)
@@ -50,92 +61,66 @@ app.get("/clothes", async (req, res) => {
       totalPages: Math.ceil(data.length / perPage),
     });
   } catch (error) {
-    console.log(error);
+    console.error("Failed to fetch products:", error);
     res.status(500).send(`Failed to fetch products. Error: ${error}`);
   }
 });
 
-// POST route - Allows to add a new item
-// example: localhost:8000/clothes
-/*
-  body: {
-    "image": "https://your-image-url.com/image.png",
-    "name": "T-shirt",
-    "price": "10",
-    "rating": 4
-  }
-*/
+// POST route - Add a new item
 app.post("/clothes", async (req, res) => {
   const { image, name, price, rating } = req.body;
 
   if (!name || !price) {
-    res.status(400).send("Missing required field/(s)");
+    res.status(400).send("Missing required field(s)");
     return;
   }
 
   try {
-    const newProduct = {
-      image,
-      name,
-      price,
-      rating,
-    };
+    const db = await connectToMongo();
+    const products = db.collection("products");
 
+    const newProduct = { image, name, price, rating };
     await products.insertOne(newProduct);
+
     res.status(201).json(newProduct);
   } catch (error) {
-    console.log(error);
+    console.error("Failed to add product:", error);
     res.status(500).send(`Failed to add product. Error: ${error}`);
-    return;
   }
 });
 
-// PUT route - Allows to update an item
-// example: localhost:8000/clothes/1
-/*
-  body: {
-    "image": "https://your-image-url.com/image.png",
-    "name": "T-shirt",
-    "price": "10",
-    "rating": 4
-  }
-*/
+// PUT route - Update an item by ID
 app.put("/clothes/:id", async (req, res) => {
   const id = req.params.id;
   const { image, name, price, rating } = req.body;
 
   if (!name || !price) {
-    res.status(400).send("Missing required field/(s)");
+    res.status(400).send("Missing required field(s)");
     return;
   }
 
-  const updatedProduct = {
-    image,
-    name,
-    price,
-    rating,
-  };
-
   try {
+    const db = await connectToMongo();
+    const products = db.collection("products");
+
+    const updatedProduct = { image, name, price, rating };
     const result = await products.updateOne(
-      { _id: ObjectId(id) },
+      { _id: new ObjectId(id) },
       { $set: updatedProduct }
     );
 
     if (result.modifiedCount === 0) {
-      res.status(404).send({ error: "Job not found" });
+      res.status(404).send("Product not found");
     } else {
-      res.status(200).send(`Job with id ${jobId} updated`);
+      res.status(200).send(`Product with id ${id} updated`);
     }
   } catch (error) {
-    console.log(error);
+    console.error("Failed to update product:", error);
     res.status(500).send(`Failed to update product. Error: ${error}`);
-    return;
   }
 });
 
-// DELETE route - Allows to delete an item
-// example: localhost:8000/clothes/1
+// DELETE route - Delete an item by ID
 app.delete("/clothes/:id", async (req, res) => {
   const id = req.params.id;
 
@@ -145,6 +130,9 @@ app.delete("/clothes/:id", async (req, res) => {
   }
 
   try {
+    const db = await connectToMongo();
+    const products = db.collection("products");
+
     const product = await products.findOne({ _id: new ObjectId(id) });
     if (!product) {
       res.status(404).send("Not Found");
@@ -154,9 +142,8 @@ app.delete("/clothes/:id", async (req, res) => {
     await products.deleteOne({ _id: new ObjectId(id) });
     res.status(204).send();
   } catch (error) {
-    console.log(error);
+    console.error("Failed to delete product:", error);
     res.status(500).send(`Failed to delete product. Error: ${error}`);
-    return;
   }
 });
 
