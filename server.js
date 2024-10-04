@@ -35,7 +35,7 @@ async function connectToMongo() {
 
 // Root route
 app.get("/", (req, res) => {
-  res.send("WORKING");
+  res.status(200).json({ message: "Server is working!" });
 });
 
 // GET route - Get all items with pagination
@@ -53,16 +53,20 @@ app.get("/clothes", async (req, res) => {
       .limit(perPage)
       .toArray();
 
+    const totalItems = await products.countDocuments();
+
     res.status(200).json({
       items: data,
-      total: data.length,
+      total: totalItems,
       page,
       perPage,
-      totalPages: Math.ceil(data.length / perPage),
+      totalPages: Math.ceil(totalItems / perPage),
     });
   } catch (error) {
     console.error("Failed to fetch products:", error);
-    res.status(500).send(`Failed to fetch products. Error: ${error}`);
+    res
+      .status(500)
+      .json({ message: `Failed to fetch products. Error: ${error.message}` });
   }
 });
 
@@ -71,8 +75,7 @@ app.post("/clothes", async (req, res) => {
   const { image, name, price, rating } = req.body;
 
   if (!name || !price) {
-    res.status(400).send("Missing required field(s)");
-    return;
+    return res.status(400).json({ message: "Missing required field(s)" });
   }
 
   try {
@@ -85,7 +88,9 @@ app.post("/clothes", async (req, res) => {
     res.status(201).json(newProduct);
   } catch (error) {
     console.error("Failed to add product:", error);
-    res.status(500).send(`Failed to add product. Error: ${error}`);
+    res
+      .status(500)
+      .json({ message: `Failed to add product. Error: ${error.message}` });
   }
 });
 
@@ -110,12 +115,12 @@ app.put("/clothes/:id", async (req, res) => {
 
     if (result.modifiedCount === 0) {
       return res.status(404).json({ message: "Product not found" });
-    } else {
-      return res.status(200).json({
-        message: `Product with id ${id} updated`,
-        product: updatedProduct,
-      });
     }
+
+    return res.status(200).json({
+      message: `Product with id ${id} updated`,
+      product: updatedProduct,
+    });
   } catch (error) {
     console.error("Failed to update product:", error);
     return res
@@ -127,10 +132,9 @@ app.put("/clothes/:id", async (req, res) => {
 // DELETE route - Delete an item by ID
 app.delete("/clothes/:id", async (req, res) => {
   const id = req.params.id;
-  console.log("delete: " + id);
+
   if (!id) {
-    res.status(400).send("Missing id");
-    return;
+    return res.status(400).json({ message: "Missing id" });
   }
 
   try {
@@ -139,15 +143,16 @@ app.delete("/clothes/:id", async (req, res) => {
 
     const product = await products.findOne({ _id: new ObjectId(id) });
     if (!product) {
-      res.status(404).send("Not Found");
-      return;
+      return res.status(404).json({ message: "Product not found" });
     }
 
     await products.deleteOne({ _id: new ObjectId(id) });
     res.status(204).send();
   } catch (error) {
     console.error("Failed to delete product:", error);
-    res.status(500).send(`Failed to delete product. Error: ${error}`);
+    return res
+      .status(500)
+      .json({ message: `Failed to delete product. Error: ${error.message}` });
   }
 });
 
