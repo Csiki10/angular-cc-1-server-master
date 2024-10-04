@@ -1,51 +1,60 @@
 const express = require("express");
 const fs = require("fs");
 const cors = require("cors");
+const { MongoClient, ObjectId, ServerApiVersion } = require("mongodb");
+
+require("dotenv").config();
 
 const app = express();
-const port = 3000;
 
-// Cors configuration - Allows requests from localhost:4200
-const corsOptions = {
-  origin: "http://localhost:4200",
-  optionsSuccessStatus: 204,
-  methods: "GET, POST, PUT, DELETE",
-};
-
-// Use cors middleware
-app.use(cors(corsOptions));
-
-// Use express.json() middleware to parse JSON bodies of requests
+app.use(cors());
 app.use(express.json());
+
+const mongoURI = process.env.MONGODB_URI;
+
+//mongo URI
+const client = new MongoClient(mongoURI, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  },
+});
+
+client.connect();
+const db = client.db("ProductStore");
+const products = db.collection("products");
+
+app.get("/", (req, res) => {
+  res.send("WORKING");
+});
 
 // GET route - Allows to get all the items
 // example: localhost:3000/clothes?page=0&perPage=2
-app.get("/clothes", (req, res) => {
+app.get("/clothes", async (req, res) => {
   const page = parseInt(req.query.page) || 0;
   const perPage = parseInt(req.query.perPage) || 10;
 
-  fs.readFile("db.json", "utf8", (err, data) => {
-    if (err) {
-      console.log(err);
-      res.status(500).send("Internal Server Error");
-      return;
-    }
+  try {
+    var data = await products
+      .find()
+      .skip(page * perPage)
+      .limit(perPage)
+      .toArray();
 
-    const jsonData = JSON.parse(data);
-
-    const start = page * perPage;
-    const end = start + perPage;
-
-    const result = jsonData.items.slice(start, end);
+    console.log(data.length);
 
     res.status(200).json({
-      items: result,
-      total: jsonData.items.length,
+      items: data,
+      total: data.length,
       page,
       perPage,
-      totalPages: Math.ceil(jsonData.items.length / perPage),
+      totalPages: Math.ceil(data.length / perPage),
     });
-  });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send(`Failed to fetch products. Error: ${error}`);
+  }
 });
 
 // POST route - Allows to add a new item
@@ -182,6 +191,9 @@ app.delete("/clothes/:id", (req, res) => {
   });
 });
 
-app.listen(port, () => {
-  console.log(`Server listening at http://localhost:${port}`);
+app.listen(process.env.PORT, () => {
+  console.log(`Server listening at http://localhost:${process.env.PORT}`);
 });
+
+// Export the app for Vercel
+module.exports = app;
